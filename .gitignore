@@ -31,3 +31,5 @@ __pycache__/
 
 # 로그 및 기타 생성 파일
 *.log
+dockerfile
+.dockerignore
