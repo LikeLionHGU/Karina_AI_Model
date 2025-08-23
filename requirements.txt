@@ -3,7 +3,15 @@ torchvision>=0.11.3
 numpy>=1.19.2 
 opencv-python
 Pillow>=8.4.0
-faiss
 scipy
 joblib
 timm==1.0.15 
+ultralytics
+fastapi
+uvicorn
+boto3
+requests
+faiss-cpu
+scikit-learn
+gunicorn
+seaborn

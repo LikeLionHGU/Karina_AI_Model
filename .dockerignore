@@ -1,0 +1,24 @@
+# .dockerignore
+
+# Python virtual environment
+venv/
+.venv/
+
+# IDE and editor settings
+.idea/
+.vscode/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# README
+README.md
