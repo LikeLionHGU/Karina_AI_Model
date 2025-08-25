@@ -36,7 +36,7 @@
 
 
 ## 출처
-본 프로젝트의 AI 어종 분석 기능은 아래 오픈소스 프로젝트의 코드와 사전 학습된 모델을 기반으로 구현되었습니다. 훌륭한 리소스를 공개해주신 원작자에게 감사드립니다.
+본 프로젝트의 AI 어종 분석 기능은 아래 오픈소스 프로젝트의 코드와 사전 학습된 모델을 기반으로 구현되었습니다.
 
 * **원본 저장소 (Codebase Reference)**
     * [fishial/fish-identification](https://github.com/fishial/fish-identification)
@@ -48,6 +48,7 @@
         * Embed: `512`
         * Format: `torchscript`
     * **Download**: 모델 파일과 데이터셋은 위 원본 저장소에서 직접 다운로드하실 수 있습니다.
+
 
 
 
