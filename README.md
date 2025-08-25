@@ -36,9 +36,19 @@
 
 
 ## 출처
-이 프로젝트는 [fish-identification](https://github.com/fishial/fish-identification) 저장소의 코드를 기반으로 합니다.
+본 프로젝트의 AI 어종 분석 기능은 아래 오픈소스 프로젝트의 코드와 사전 학습된 모델을 기반으로 구현되었습니다. 훌륭한 리소스를 공개해주신 원작자에게 감사드립니다.
 
-Pre-trained 된 "Fish Classification - beitv2_base_patch16_224 (640 classes, embed 512, torchscript)"라는 Model을 사용하였습니다.
+* **원본 저장소 (Codebase Reference)**
+    * [fishial/fish-identification](https://github.com/fishial/fish-identification)
+
+* **사전 학습 모델 (Pre-trained Model)**
+    * **Model Name**: `Fish Classification - beitv2_base_patch16_224`
+    * **Specifications**:
+        * Classes: `640`
+        * Embed: `512`
+        * Format: `torchscript`
+    * **Download**: 모델 파일과 데이터셋은 위 원본 저장소에서 직접 다운로드하실 수 있습니다.
+
 
 
 
