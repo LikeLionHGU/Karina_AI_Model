@@ -304,16 +304,31 @@ def analyze_media_server(media_path: str, file_type: str, conf_threshold: float 
 # --- API 엔드포인트 정의 ---
 @app.post("/analyze_video")
 async def analyze_video_endpoint(request: VideoRequest):
-    """S3 URL을 받아 영상을 분석하고 어종과 횟수를 반환합니다. (기존 호환성 유지)"""
+    """S3 URL을 받아 미디어를 분석하고 어종과 횟수를 반환합니다. (자동 파일 타입 감지)"""
     local_media_path = None
     try:
         local_media_path = download_media_from_s3(request.s3_url)
         
-        # 기존 호환성을 위해 video로 처리
-        detected_species_list = analyze_media_server(local_media_path, "video")
+        # 파일 확장자로 자동 감지
+        file_extension = os.path.splitext(local_media_path)[1].lower()
+        image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp']
+        video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.wmv']
+        
+        if file_extension in image_extensions:
+            file_type = "image"
+            print(f">>> 이미지 파일로 감지됨: {file_extension}")
+        elif file_extension in video_extensions:
+            file_type = "video"
+            print(f">>> 비디오 파일로 감지됨: {file_extension}")
+        else:
+            # 기본값은 video로 설정하되 경고 메시지 출력
+            file_type = "video"
+            print(f">>> 알 수 없는 파일 형식, 비디오로 처리: {file_extension}")
+        
+        detected_species_list = analyze_media_server(local_media_path, file_type)
         
         if not detected_species_list:
-            return {"message": "영상에서 어종을 탐지하지 못했습니다.", "analysis_result": []}
+            return {"message": f"{file_type}에서 어종을 탐지하지 못했습니다.", "analysis_result": []}
             
         summary = Counter(detected_species_list)
         
@@ -323,7 +338,7 @@ async def analyze_video_endpoint(request: VideoRequest):
             for species, count in summary.most_common()
         }
         
-        print("영상 처리 완료! 최종 결과를 반환합니다.")
+        print(f"{file_type} 처리 완료! 최종 결과를 반환합니다.")
         return {"analysisResult": final_result}
 
     finally:
