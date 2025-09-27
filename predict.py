@@ -150,7 +150,15 @@ keyword_to_korean = {
     "Chaetodipterus faber": "제비활치",
     "Opsanus tau": "상어",
     "Nocomis micropogon": "잉어",
-    "Galeorhinus galeus": "상어"
+    "Galeorhinus galeus": "상어",
+    "Micropterus nigricans": "우럭",
+    "Pomatomus saltatrix": "농어",
+    "Pachymetopon blochii": "돔",
+    "Pylodictis olivaris": "메기",
+    "Epinephelus morio": "돔",
+    "Moxostoma erythrurum": "잉어",
+    "Rachycentron canadum": "고등어",
+    "Alectis ciliaris": "전갱이"
 }
 
 def imread_unicode(path: str):
@@ -206,8 +214,8 @@ def filter_overlapping_detections(detections, iou_threshold=0.5):
     
     return filtered
 
-def deduplicate_species_results(species_list, max_per_species=2):
-    """같은 어종의 중복 결과를 제한합니다."""
+def deduplicate_species_results(species_list, max_per_species=5):
+    """같은 어종의 중복 결과를 제한합니다. (최대 개수를 5로 증가)"""
     if len(species_list) <= 1:
         return species_list
     
@@ -419,6 +427,8 @@ def process_frame(frame: np.ndarray, save_dir: str, conf_threshold: float, frame
     
     frame_with_boxes = frame.copy()
     detection_count = 0
+    classification_attempts = 0
+    successful_classifications = 0
 
     for i, det in enumerate(filtered_detections):
         x1, y1, x2, y2, conf, cls = det
@@ -438,18 +448,29 @@ def process_frame(frame: np.ndarray, save_dir: str, conf_threshold: float, frame
                 continue
 
             try:
+                classification_attempts += 1
                 results: list[PredictionResult] = classifier(fish_crop_img)
                 if results:
                     best_fish = max(results, key=lambda x: x.accuracy)
                     korean_name = get_korean_name(best_fish.name, keyword_to_korean)
                     
-                    # 어종 분류 정확도 임계값 적용 (0.4 이상만 허용)
-                    if best_fish.accuracy >= 0.4:
+                    # 어종 분류 정확도 임계값을 더 낮춤 (0.25 이상으로 변경)
+                    if best_fish.accuracy >= 0.25:
+                        successful_classifications += 1
                         if korean_name:
                             detected_species.append(korean_name)
                             print(f"  [탐지 성공] 이름: {korean_name}, 정확도: {best_fish.accuracy:.2f}")
                             # 분류된 이름도 이미지에 추가
                             cv2.putText(frame_with_boxes, korean_name, (x1, y2 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
+                        else:
+                            # 한글 이름이 없는 경우 과학적 이름 사용
+                            detected_species.append(best_fish.name)
+                            print(f"  [탐지 성공] 이름: {best_fish.name}, 정확도: {best_fish.accuracy:.2f}")
+                            cv2.putText(frame_with_boxes, best_fish.name, (x1, y2 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
+                    else:
+                        print(f"  [탐지 실패] 정확도 부족: {best_fish.name}, 정확도: {best_fish.accuracy:.2f}")
+                else:
+                    print(f"  [탐지 실패] 분류 결과 없음")
 
             except Exception as e:
                 print(f"  [경고] 어종 분류 중 오류 발생: {e}")
@@ -460,8 +481,12 @@ def process_frame(frame: np.ndarray, save_dir: str, conf_threshold: float, frame
         cv2.imwrite(save_path, frame_with_boxes)
         print(f"  [정보] 탐지 결과 이미지를 저장했습니다: {save_path}")
 
+    # 통계 정보 출력
+    print(f"  [통계] 분류 시도: {classification_attempts}회, 성공: {successful_classifications}회")
+    
     # 어종 중복 제거 적용
     detected_species = deduplicate_species_results(detected_species)
+    print(f"  [최종] 탐지된 어종 수: {len(detected_species)}마리")
 
     return detected_species
 
