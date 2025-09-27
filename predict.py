@@ -250,7 +250,11 @@ app = FastAPI()
 # S3 URL을 받기 위한 요청 모델 정의
 class MediaRequest(BaseModel):
     s3_url: str
-    file_type: str  # "image" 또는 "video"
+    file_type: str = "video"  # "image" 또는 "video", 기본값은 video
+
+# 기존 호환성을 위한 별도 모델
+class VideoRequest(BaseModel):
+    s3_url: str
 
 def download_media_from_s3(s3_url: str) -> str:
     """S3 URL에서 미디어 파일을 다운로드하고, 로컬 파일 경로를 반환합니다."""
@@ -298,6 +302,35 @@ def analyze_media_server(media_path: str, file_type: str, conf_threshold: float 
         return []
 
 # --- API 엔드포인트 정의 ---
+@app.post("/analyze_video")
+async def analyze_video_endpoint(request: VideoRequest):
+    """S3 URL을 받아 영상을 분석하고 어종과 횟수를 반환합니다. (기존 호환성 유지)"""
+    local_media_path = None
+    try:
+        local_media_path = download_media_from_s3(request.s3_url)
+        
+        # 기존 호환성을 위해 video로 처리
+        detected_species_list = analyze_media_server(local_media_path, "video")
+        
+        if not detected_species_list:
+            return {"message": "영상에서 어종을 탐지하지 못했습니다.", "analysis_result": []}
+            
+        summary = Counter(detected_species_list)
+        
+        # 최종 결과 JSON 형식으로 변환
+        final_result = {
+            species: count 
+            for species, count in summary.most_common()
+        }
+        
+        print("영상 처리 완료! 최종 결과를 반환합니다.")
+        return {"analysisResult": final_result}
+
+    finally:
+        if local_media_path and os.path.exists(local_media_path):
+            os.remove(local_media_path)
+            print(f">>> 임시 파일 삭제 완료: {local_media_path}")
+
 @app.post("/analyze_media")
 async def analyze_media_endpoint(request: MediaRequest):
     """S3 URL을 받아 이미지 또는 영상을 분석하고 어종과 횟수를 반환합니다."""
